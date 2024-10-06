@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vohala Crontab Guru</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f4f9;
+            color: #333;
+            padding: 20px;
+            margin: 0;
+        }
+        h1 {
+            text-align: center;
+            color: #4CAF50;
+        }
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+        }
+        form {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+        .form-group {
+            text-align: center;
+            flex: 1;
+            min-width: 120px;
+        }
+        input {
+            width: 80%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            text-align: center;
+            font-size: 16px;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        label {
+            display: block;
+            margin-top: 5px;
+            font-size: 14px;
+            color: #666;
+        }
+        .output {
+            text-align: center;
+            font-size: 20px;
+            margin-top: 20px;
+            color: #4CAF50;
+        }
+        .error {
+            color: red;
+            text-align: center;
+            margin-top: 10px;
+        }
+        .info {
+            margin-top: 40px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .info h2 {
+            margin-top: 0;
+        }
+        .info ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        .info ul li {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Vohala Crontab</h1>
+    <div class="container">
+        <form id="crontabForm">
+            <div class="form-group">
+                <input type="text" id="minute" name="minute" placeholder="*" required>
+                <label for="minute">Minute</label>
+            </div>
+            <div class="form-group">
+                <input type="text" id="hour" name="hour" placeholder="*" required>
+                <label for="hour">Hour</label>
+            </div>
+            <div class="form-group">
+                <input type="text" id="dayOfMonth" name="dayOfMonth" placeholder="*" required>
+                <label for="dayOfMonth">Day of Month</label>
+            </div>
+            <div class="form-group">
+                <input type="text" id="month" name="month" placeholder="*" required>
+                <label for="month">Month</label>
+            </div>
+            <div class="form-group">
+                <input type="text" id="dayOfWeek" name="dayOfWeek" placeholder="*" required>
+                <label for="dayOfWeek">Day of Week</label>
+            </div>
+        </form>
+        <div class="output" id="crontabDescription">Description will appear here.</div>
+        <div class="output" id="crontabDatetime">Next execution time will appear here.</div>
+        <div class="output" id="crontabExpression">Crontab expression will appear here.</div>
+        <div class="error" id="errorMessage"></div>
+    </div>
+    <div class="info">
+        <h2>Crontab Fields</h2>
+        <p>(minute) (hour) (day of month) (month) (day of week)</p>
+        <h2>Special Characters</h2>
+        <ul>
+            <li>* : any value</li>
+            <li>, : value list separator</li>
+            <li>- : range of values</li>
+            <li>/ : step values</li>
+            <li>@yearly : (non-standard)</li>
+            <li>@annually : (non-standard)</li>
+            <li>@monthly : (non-standard)</li>
+            <li>@weekly : (non-standard)</li>
+            <li>@daily : (non-standard)</li>
+            <li>@hourly : (non-standard)</li>
+            <li>@reboot : (non-standard)</li>
+        </ul>
+    </div>
+    <script>
+        function describeCron(minute, hour, dayOfMonth, month, dayOfWeek) {
+            let description = `At ${minute === '*' ? 'every' : minute} minute(s) past ${hour === '*' ? 'every' : hour} hour(s), on ${dayOfMonth === '*' ? 'every' : dayOfMonth} day(s) of the month, in ${month === '*' ? 'every' : month} month(s), on ${dayOfWeek === '*' ? 'every' : dayOfWeek} day(s) of the week.`;
+            return description;
+        }
+
+        function getNextExecutionTime(minute, hour, dayOfMonth, month, dayOfWeek) {
+            const now = new Date();
+            now.setSeconds(0);
+
+            const nextDate = new Date(now.getTime());
+            nextDate.setMinutes(minute === '*' ? now.getMinutes() : minute);
+            nextDate.setHours(hour === '*' ? now.getHours() : hour);
+            nextDate.setDate(dayOfMonth === '*' ? now.getDate() : dayOfMonth);
+            nextDate.setMonth(month === '*' ? now.getMonth() : month - 1);
+
+            if (nextDate <= now) {
+                nextDate.setMonth(nextDate.getMonth() + 1);
+            }
+            
+            return nextDate.toISOString().slice(0, 19).replace('T', ' ');
+        }
+
+        function isValidCrontabField(value, min, max) {
+            if (value === '*') return true;
+            const num = parseInt(value, 10);
+            return !isNaN(num) && num >= min && num <= max;
+        }
+
+        document.getElementById('crontabForm').addEventListener('input', function() {
+            const minute = document.getElementById('minute').value || '*';
+            const hour = document.getElementById('hour').value || '*';
+            const dayOfMonth = document.getElementById('dayOfMonth').value || '*';
+            const month = document.getElementById('month').value || '*';
+            const dayOfWeek = document.getElementById('dayOfWeek').value || '*';
+
+            const isValid = isValidCrontabField(minute, 0, 59) &&
+                            isValidCrontabField(hour, 0, 23) &&
+                            isValidCrontabField(dayOfMonth, 1, 31) &&
+                            isValidCrontabField(month, 1, 12) &&
+                            isValidCrontabField(dayOfWeek, 0, 7);
+
+            if (!isValid) {
+                document.getElementById('errorMessage').textContent = 'Please enter valid values for each field.';
+                document.getElementById('crontabDescription').textContent = '';
+                document.getElementById('crontabDatetime').textContent = '';
+                document.getElementById('crontabExpression').textContent = '';
+                return;
+            }
+
+            document.getElementById('errorMessage').textContent = '';
+            const crontabExpression = `${minute} ${hour} ${dayOfMonth} ${month} ${dayOfWeek}`;
+            const description = describeCron(minute, hour, dayOfMonth, month, dayOfWeek);
+            const nextExecutionTime = getNextExecutionTime(minute, hour, dayOfMonth, month, dayOfWeek);
+            
+            document.getElementById('crontabDescription').textContent = description;
+            document.getElementById('crontabDatetime').textContent = `Next execution time: ${nextExecutionTime}`;
+            document.getElementById('crontabExpression').textContent = `Crontab expression: ${crontabExpression}`;
+        });
+    </script>
+</body>
+</html>
